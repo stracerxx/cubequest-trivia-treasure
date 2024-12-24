@@ -34,15 +34,17 @@ const QuestionPanel = () => {
         setCorrectAnswers(0);
         setQuestionsAnswered(0);
         setCurrentQuestion(questions[Math.floor(Math.random() * questions.length)]);
+        setTimeLeft(30);
       } else {
         toast.error("Chamber failed!", {
           description: "You didn't answer enough questions correctly. Try again.",
         });
         setCorrectAnswers(0);
         setQuestionsAnswered(0);
+        setTimeLeft(30);
       }
     }
-  }, [questionsAnswered, correctAnswers, advanceChamber]);
+  }, [questionsAnswered, correctAnswers]);
 
   const handleTimeout = () => {
     toast.error("Time's up!", {
@@ -67,6 +69,7 @@ const QuestionPanel = () => {
     }
     
     setQuestionsAnswered(prev => prev + 1);
+    
     // Get next question if not done with chamber
     if (questionsAnswered < 2) {
       const nextQuestion = questions[Math.floor(Math.random() * questions.length)];
