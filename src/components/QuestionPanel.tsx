@@ -9,7 +9,8 @@ const QuestionPanel = () => {
   const [isAnswering, setIsAnswering] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
-  const { advanceChamber } = useGameState();
+  const { advanceChamber, damagePlayer } = useGameState();
+  const [isDeathAnimation, setIsDeathAnimation] = useState(false);
 
   useEffect(() => {
     if (isAnswering && timeLeft > 0) {
@@ -30,7 +31,6 @@ const QuestionPanel = () => {
           description: "You've answered enough questions correctly. Advancing to next chamber...",
         });
         advanceChamber();
-        // Reset for next chamber
         setCorrectAnswers(0);
         setQuestionsAnswered(0);
         setCurrentQuestion(questions[Math.floor(Math.random() * questions.length)]);
@@ -46,10 +46,21 @@ const QuestionPanel = () => {
     }
   }, [questionsAnswered, correctAnswers]);
 
-  const handleTimeout = () => {
-    toast.error("Time's up!", {
-      description: "The chamber grows darker...",
+  const handleDeath = (message: string) => {
+    setIsDeathAnimation(true);
+    damagePlayer();
+    toast.error("DEATH!", {
+      description: message,
     });
+    
+    // Reset death animation after a delay
+    setTimeout(() => {
+      setIsDeathAnimation(false);
+    }, 1000);
+  };
+
+  const handleTimeout = () => {
+    handleDeath("Time's up! The chamber claims another victim...");
     setIsAnswering(false);
     setQuestionsAnswered(prev => prev + 1);
   };
@@ -63,14 +74,11 @@ const QuestionPanel = () => {
       });
       setCorrectAnswers(prev => prev + 1);
     } else {
-      toast.error("Wrong answer!", {
-        description: currentQuestion.deathTrap,
-      });
+      handleDeath(currentQuestion.deathTrap);
     }
     
     setQuestionsAnswered(prev => prev + 1);
     
-    // Get next question if not done with chamber
     if (questionsAnswered < 2) {
       const nextQuestion = questions[Math.floor(Math.random() * questions.length)];
       setCurrentQuestion(nextQuestion);
@@ -79,12 +87,12 @@ const QuestionPanel = () => {
   };
 
   return (
-    <div className="mt-4 p-4 bg-game-dark pixel-borders">
+    <div className={`mt-4 p-4 bg-game-dark pixel-borders transition-colors duration-300 ${isDeathAnimation ? 'bg-red-900' : ''}`}>
       <div className="flex justify-between items-center mb-4">
         <div className="text-game-blue overflow-hidden whitespace-nowrap animate-typing">
           Game Master: {currentQuestion.text}
         </div>
-        <div className="text-game-pink font-mono">
+        <div className={`text-game-pink font-mono ${timeLeft <= 5 ? 'animate-pulse text-red-500' : ''}`}>
           {timeLeft}s
         </div>
       </div>

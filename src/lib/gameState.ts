@@ -10,6 +10,8 @@ export type GameState = {
     z: number;
   };
   advanceChamber: () => void;
+  damagePlayer: () => void;
+  resetHealth: () => void;
 };
 
 export const useGameState = create<GameState>((set) => ({
@@ -29,6 +31,19 @@ export const useGameState = create<GameState>((set) => ({
       z: Math.floor(Math.random() * 5),
     }
   })),
+  damagePlayer: () => set((state) => {
+    const newHealth = state.health - 25;
+    if (newHealth <= 0) {
+      return {
+        health: 100,
+        deaths: state.deaths + 1,
+        currentChamber: 1,
+        coordinates: { x: 0, y: 0, z: 0 }
+      };
+    }
+    return { health: newHealth };
+  }),
+  resetHealth: () => set({ health: 100 }),
 }));
 
 export const initialGameState = {
