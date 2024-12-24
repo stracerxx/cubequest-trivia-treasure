@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { questions } from '../lib/triviaData';
 import { toast } from 'sonner';
+import { useGameState } from '../lib/gameState';
 
 const QuestionPanel = () => {
   const [currentQuestion, setCurrentQuestion] = useState(questions[0]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [isAnswering, setIsAnswering] = useState(false);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
+  const { advanceChamber } = useGameState();
 
   useEffect(() => {
     if (isAnswering && timeLeft > 0) {
@@ -19,11 +23,33 @@ const QuestionPanel = () => {
     }
   }, [timeLeft, isAnswering]);
 
+  useEffect(() => {
+    if (questionsAnswered === 3) {
+      if (correctAnswers >= 2) {
+        toast.success("Chamber cleared!", {
+          description: "You've answered enough questions correctly. Advancing to next chamber...",
+        });
+        advanceChamber();
+        // Reset for next chamber
+        setCorrectAnswers(0);
+        setQuestionsAnswered(0);
+        setCurrentQuestion(questions[Math.floor(Math.random() * questions.length)]);
+      } else {
+        toast.error("Chamber failed!", {
+          description: "You didn't answer enough questions correctly. Try again.",
+        });
+        setCorrectAnswers(0);
+        setQuestionsAnswered(0);
+      }
+    }
+  }, [questionsAnswered, correctAnswers, advanceChamber]);
+
   const handleTimeout = () => {
     toast.error("Time's up!", {
       description: "The chamber grows darker...",
     });
     setIsAnswering(false);
+    setQuestionsAnswered(prev => prev + 1);
   };
 
   const handleAnswer = (optionIndex: number) => {
@@ -31,12 +57,21 @@ const QuestionPanel = () => {
     
     if (optionIndex === currentQuestion.correctAnswer) {
       toast.success("Correct!", {
-        description: "You may proceed to the next chamber...",
+        description: "Keep going...",
       });
+      setCorrectAnswers(prev => prev + 1);
     } else {
       toast.error("Wrong answer!", {
         description: currentQuestion.deathTrap,
       });
+    }
+    
+    setQuestionsAnswered(prev => prev + 1);
+    // Get next question if not done with chamber
+    if (questionsAnswered < 2) {
+      const nextQuestion = questions[Math.floor(Math.random() * questions.length)];
+      setCurrentQuestion(nextQuestion);
+      setTimeLeft(30);
     }
   };
 
@@ -61,6 +96,10 @@ const QuestionPanel = () => {
             {option}
           </button>
         ))}
+      </div>
+      
+      <div className="mt-4 text-game-pink text-sm">
+        Questions: {questionsAnswered}/3 | Correct: {correctAnswers}
       </div>
     </div>
   );
